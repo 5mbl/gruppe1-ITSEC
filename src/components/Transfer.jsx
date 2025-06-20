@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -48,8 +48,32 @@ export default function TransferPage() {
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showRawNote, setShowRawNote] = useState(false)
 
-  const userBalance = 10420.0
+  const [userBalance, setUserBalance] = useState(0)
+
+  useEffect(() => {
+    const fetchBalanceAndTransactions = async () => {
+      const balanceRes = await fetch("/api/balance");
+      const balanceData = await balanceRes.json();
+      setUserBalance(parseFloat(balanceData.balance));
+      console.log("Balance:", balanceData.balance);
+  
+  
+    };
+    fetchBalanceAndTransactions();
+  }, []);
+
+  
+
+const noteExecuted = useRef(false)
+
+
+
+
+
+
+
   const dailyLimit = 5000.0
   const usedToday = 1200.0
 
@@ -134,6 +158,7 @@ export default function TransferPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (validateForm()) {
+      setShowRawNote(true)
       setShowConfirmation(true)
     }
   }
@@ -153,6 +178,12 @@ export default function TransferPage() {
 
     router.push("/dashboard")
   }
+
+  // Debugging: Log the rawNote value
+  console.log("rawNote:", rawNote);
+
+  // Debugging: Log all search parameters
+  console.log("Search Parameters:", searchParams.toString());
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -405,10 +436,12 @@ export default function TransferPage() {
                   <span className="text-sm text-slate-600 dark:text-slate-400">Verwendungszweck:</span>
                   <span className="font-medium">{formData.purpose}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Notiz:</span>
-                  <span dangerouslySetInnerHTML={{ __html: rawNote }} />
-                </div>
+                {showRawNote && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Notiz:</span>
+                    <span dangerouslySetInnerHTML={{ __html: rawNote }} />
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter className="gap-2">

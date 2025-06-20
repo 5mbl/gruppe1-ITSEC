@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { ArrowUpRight, ArrowDownLeft, Send, FileText, Plus, TrendingUp, Calendar, User, Bell, Settings, Menu } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation";
 
@@ -14,38 +14,35 @@ import { useRouter } from "next/navigation";
 export default function Dashboard() {
 
 const router = useRouter();
+const [balance, setBalance] = useState(0);
+const [transactions, setTransactions] = useState([]);
+
+
+
+
+useEffect(() => {
+  const fetchBalanceAndTransactions = async () => {
+    const balanceRes = await fetch("/api/balance");
+    const balanceData = await balanceRes.json();
+    setBalance(parseFloat(balanceData.balance));
+    console.log("Balance:", balanceData.balance);
+
+    const txRes = await fetch("/api/transactions");
+    const txData = await txRes.json();
+    setTransactions(txData);
+
+    console.log("Fetched transactions:", txData);
+  };
+  fetchBalanceAndTransactions();
+}, []);
+
 
   const [user] = useState({
     name: "Max Mustermann",
-    balance: 10420.0,
+    balance: balance,
     currency: "EUR",
     accountNumber: "DE89 3704 0044 0532 0130 00",
-    transactions: [
-      {
-        id: 1,
-        date: "2025-05-25",
-        recipient: "John Doe",
-        amount: -200.0,
-        note: "Abendessen Rückerstattung",
-        type: "outgoing",
-      },
-      {
-        id: 2,
-        date: "2025-05-24",
-        recipient: "Alice Smith",
-        amount: -1000.0,
-        note: "Miete",
-        type: "outgoing",
-      },
-      {
-        id: 3,
-        date: "2025-05-23",
-        recipient: "Gehalt",
-        amount: 3500.0,
-        note: "Monatsgehalt",
-        type: "incoming",
-      },
-    ],
+    
   })
 
   const formatCurrency = (amount) => {
@@ -133,7 +130,7 @@ const router = useRouter();
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl md:text-5xl font-bold mb-2">{formatCurrency(user.balance)}</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">{formatCurrency(balance)}</div>
               <p className="text-red-100 text-sm">
                 Letztes Update: {formatDate(new Date().toISOString().split("T")[0])}
               </p>
@@ -184,62 +181,63 @@ const router = useRouter();
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-0">
-              {user.transactions.map((transaction, index) => (
-                <div key={transaction.id}>
-                  <div className="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`p-2 rounded-full ${
-                          transaction.type === "incoming"
-                            ? "bg-green-100 dark:bg-green-900/30"
-                            : "bg-red-100 dark:bg-red-900/30"
-                        }`}
-                      >
-                        {transaction.type === "incoming" ? (
-                          <ArrowDownLeft className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-slate-900 dark:text-slate-100">{transaction.recipient}</p>
-                          <Badge
-                            variant={transaction.type === "incoming" ? "default" : "secondary"}
-                            className={`text-xs ${
-                              transaction.type === "incoming"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
-                            }`}
-                          >
-                            {transaction.type === "incoming" ? "Eingang" : "Ausgang"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">{transaction.note}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {formatDate(transaction.date)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-lg font-bold ${
-                          transaction.amount > 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {transaction.amount > 0 ? "+" : ""}
-                        {formatCurrency(transaction.amount)}
-                      </p>
-                    </div>
-                  </div>
-                  {index < user.transactions.length - 1 && <Separator className="mx-6" />}
-                </div>
-              ))}
+            {transactions.map((transaction, index) => (
+  <div key={transaction.id}>
+    <div className="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200">
+      <div className="flex items-center gap-4">
+        <div
+          className={`p-2 rounded-full ${
+            transaction.amount > 0
+              ? "bg-green-100 dark:bg-green-900/30"
+              : "bg-red-100 dark:bg-red-900/30"
+          }`}
+        >
+          {transaction.amount > 0 ? (
+            <ArrowDownLeft className="w-4 h-4 text-green-600 dark:text-green-400" />
+          ) : (
+            <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" />
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="font-semibold text-slate-900 dark:text-slate-100">{transaction.recipient}</p>
+            <Badge
+              variant={transaction.amount > 0 ? "default" : "secondary"}
+              className={`text-xs ${
+                transaction.amount > 0
+                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                  : "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
+              }`}
+            >
+              {transaction.amount > 0 ? "Eingang" : "Ausgang"}
+            </Badge>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{transaction.description}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+            {formatDate(transaction.created_at)}
+          </p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p
+          className={`text-lg font-bold ${
+            transaction.amount > 0
+              ? "text-green-600 dark:text-green-400"
+              : "text-red-600 dark:text-red-400"
+          }`}
+        >
+          {transaction.amount > 0 ? "+" : ""}
+          {formatCurrency(transaction.amount)}
+        </p>
+      </div>
+    </div>
+    {index < transactions.length - 1 && <Separator className="mx-6" />}
+  </div>
+))}
+
             </div>
 
-            {user.transactions.length === 0 && (
+            {transactions.length === 0 && (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
                 <p className="text-slate-600 dark:text-slate-400 text-lg">Keine Transaktionen vorhanden</p>
