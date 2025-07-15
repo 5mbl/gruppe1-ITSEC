@@ -21,6 +21,15 @@ const [transactions, setTransactions] = useState([]);
 
 
 useEffect(() => {
+
+    // ✅ Setz den userId Cookie
+    if (!document.cookie.includes("userId=")) {
+      document.cookie = "userId=2; path=/";
+      console.log("Cookie gesetzt: userId=2");
+    }
+    console.log("GESETZE COOKIES:", document.cookie);
+
+
   const fetchBalanceAndTransactions = async () => {
     const balanceRes = await fetch("/api/balance");
     const balanceData = await balanceRes.json();

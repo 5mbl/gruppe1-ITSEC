@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
 
-  const validateEmail = (email) => {
+/*   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) {
       return "E-Mail-Adresse ist erforderlich"
@@ -44,25 +44,25 @@ export default function LoginPage() {
       return "Passwort muss mindestens 6 Zeichen lang sein"
     }
     return ""
-  }
+  } */
 
   const handleEmailChange = (e) => {
     const value = e.target.value
     setEmail(value)
-    setEmailError(validateEmail(value))
+    //setEmailError(validateEmail(value))
     setError("")
   }
 
   const handlePasswordChange = (e) => {
     const value = e.target.value
     setPassword(value)
-    setPasswordError(validatePassword(value))
+    //setPasswordError(validatePassword(value))
     setError("")
   }
 
   const handleLogin = async (e) => {
     e?.preventDefault()
-
+/* 
     const emailValidation = validateEmail(email)
     const passwordValidation = validatePassword(password)
 
@@ -71,12 +71,12 @@ export default function LoginPage() {
 
     if (emailValidation || passwordValidation) {
       return
-    }
+    } */
 
     setIsLoading(true)
     setError("")
 
-    // Simulate API call delay
+/*     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     if (email === mockEmail && password === mockPassword) {
@@ -87,7 +87,30 @@ export default function LoginPage() {
     } else {
       setError("E-Mail-Adresse oder Passwort ist falsch. Bitte versuchen Sie es erneut.")
       setIsLoading(false)
-    }
+    } */
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+    
+        if (res.ok) {
+          toast.success("Anmeldung erfolgreich!", {
+            description: "Willkommen bei HWR-Bank. Sie werden zum Dashboard weitergeleitet.",
+          })
+          router.push("/dashboard")
+        } else {
+          const data = await res.json()
+          setError(data.error || "Unbekannter Fehler bei der Anmeldung")
+        }
+      } catch (err) {
+        setError("Verbindungsfehler. Bitte versuchen Sie es erneut.")
+      } finally {
+        setIsLoading(false)
+      }
   }
 
   const handleKeyPress = (e) => {
@@ -129,7 +152,7 @@ export default function LoginPage() {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     placeholder="ihre.email@hwr-berlin.de"
                     value={email}
                     onChange={handleEmailChange}
